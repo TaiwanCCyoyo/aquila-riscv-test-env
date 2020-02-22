@@ -159,35 +159,16 @@ handle_exception:                                                       \
         j write_tohost;                                                 \
 reset_vector:                                                           \
         RISCV_MULTICORE_DISABLE;                                        \
-        INIT_SATP;                                                     \
-        INIT_PMP;                                                       \
-        DELEGATE_NO_TRAPS;                                              \
         li TESTNUM, 0;                                                  \
         la t0, trap_vector;                                             \
         csrw mtvec, t0;                                                 \
-        CHECK_XLEN;                                                     \
         /* if an stvec_handler is defined, delegate exceptions to it */ \
-        la t0, stvec_handler;                                           \
-        beqz t0, 1f;                                                    \
-        csrw stvec, t0;                                                 \
-        li t0, (1 << CAUSE_LOAD_PAGE_FAULT) |                           \
-               (1 << CAUSE_STORE_PAGE_FAULT) |                          \
-               (1 << CAUSE_FETCH_PAGE_FAULT) |                          \
-               (1 << CAUSE_MISALIGNED_FETCH) |                          \
-               (1 << CAUSE_USER_ECALL) |                                \
-               (1 << CAUSE_BREAKPOINT);                                 \
-        csrw medeleg, t0;                                               \
-        csrr t1, medeleg;                                               \
-        bne t0, t1, other_exception;                                    \
-1:      csrwi mstatus, 0;                                               \
+        csrwi mstatus, 0;                                               \
         init;                                                           \
         EXTRA_INIT;                                                     \
         EXTRA_INIT_TIMER;                                               \
-        la t0, 1f;                                                      \
-        csrw mepc, t0;                                                  \
-        csrr a0, mhartid;                                               \
-        mret;                                                           \
-1:
+start_test:
+
 
 //-----------------------------------------------------------------------
 // End Macro
@@ -205,7 +186,7 @@ reset_vector:                                                           \
         li TESTNUM, 1;                                                  \
         li a7, 93;                                                      \
         li a0, 0;                                                       \
-        ecall
+        j write_tohost;
 
 #define TESTNUM gp
 #define RVTEST_FAIL                                                     \
@@ -215,7 +196,7 @@ reset_vector:                                                           \
         or TESTNUM, TESTNUM, 1;                                         \
         li a7, 93;                                                      \
         addi a0, TESTNUM, 0;                                            \
-        ecall
+        j write_tohost;
 
 //-----------------------------------------------------------------------
 // Data Section Macro
